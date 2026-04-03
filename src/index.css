@@ -1,0 +1,71 @@
+:root {
+  --text: #000;
+  --bg: #fff;
+  --border: #000;
+  --accent: #96190c;
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font: 16px/145% var(--sans);
+}
+
+body { 
+  margin: 0; 
+  background-color: #f4f4f4; 
+}
+
+#root {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-inline: 1px solid #e5e4e7;
+}
+
+/* Ajuste para Tabelas no Mobile - REMOVIDO O ATRIBUTO OBSOLETO */
+.table-container {
+  width: 100%;
+  overflow-x: auto; /* Isso já garante a rolagem no mobile */
+  border: 2px solid #000;
+  box-sizing: border-box;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px; /* Garante que a tabela não "esmague" as colunas no celular */
+}
+
+/* Container Flexível para as colunas de Cadastro */
+.grid-layout {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 20px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.col-sidebar { 
+  flex: 1 1 350px; 
+  box-sizing: border-box;
+}
+
+.col-main { 
+  flex: 2 1 500px; 
+  box-sizing: border-box;
+}
+
+/* Breakpoint para Celulares */
+@media (max-width: 768px) {
+  h2 { font-size: 1.1rem !important; }
+  .col-sidebar, .col-main { 
+    flex: 1 1 100%; 
+  }
+  
+  /* Melhora o toque nos inputs no mobile */
+  input, select, button {
+    font-size: 16px !important; /* Evita zoom automático no iOS */
+  }
+}
