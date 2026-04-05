@@ -42,7 +42,7 @@ Sistema de gestão escolar focado no controle de frequência, lançamento de not
 1.  **Clone o repositório:**
 
     ```bash
-    git clone https://github.com/seu-usuario/diario-classe.git
+    git clone https://github.com/EsmeraldoCarneiro/Apontamento-Docente.git
     ```
 
 2.  **Instale as dependências:**
