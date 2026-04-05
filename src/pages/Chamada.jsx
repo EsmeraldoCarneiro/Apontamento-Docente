@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot, query, where, doc, addDoc, getDocs, updateDoc, deleteDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { 
+  collection, onSnapshot, query, where, doc, addDoc, 
+  getDocs, updateDoc, deleteDoc, serverTimestamp, orderBy 
+} from 'firebase/firestore';
 
 export default function Chamada() {
   const obterDataHoje = () => new Date().toISOString().split('T')[0];
@@ -27,7 +30,11 @@ export default function Chamada() {
   const buscarChamada = async () => {
     const user = auth.currentUser;
     if (!idTurmaSelecionada || !user) return alert("Selecione a Turma.");
-    const q = query(collection(db, "historico_chamadas"), where("userId", "==", user.uid), where("idTurma", "==", idTurmaSelecionada), where("dataAula", "==", dataAula));
+    const q = query(collection(db, "historico_chamadas"), 
+      where("userId", "==", user.uid), 
+      where("idTurma", "==", idTurmaSelecionada), 
+      where("dataAula", "==", dataAula)
+    );
     try {
       const snap = await getDocs(q);
       if (!snap.empty) {
@@ -46,20 +53,23 @@ export default function Chamada() {
     const user = auth.currentUser;
     if (!idTurmaSelecionada || !user) return;
     const turma = turmas.find(t => t.id === idTurmaSelecionada);
-    const dados = { userId: user.uid, idTurma: idTurmaSelecionada, nomeTurma: turma.nomeTurma, dataAula, conteudo, listaPresenca: presencas, timestamp: serverTimestamp() };
+    const dados = { 
+      userId: user.uid, 
+      idTurma: idTurmaSelecionada, 
+      nomeTurma: turma.nomeTurma, 
+      materia: turma.materia || '',
+      turno: turma.turno || '',
+      dataAula, 
+      conteudo, 
+      listaPresenca: presencas, 
+      timestamp: serverTimestamp() 
+    };
     try {
       if (idChamadaExistente) { await updateDoc(doc(db, "historico_chamadas", idChamadaExistente), dados); } 
       else { await addDoc(collection(db, "historico_chamadas"), dados); }
       alert("CHAMADA SALVA!");
       resetar();
     } catch (e) { console.error(e); }
-  };
-
-  const excluirChamada = async () => {
-    if (!idChamadaExistente) return;
-    if (window.confirm("DESEJA EXCLUIR ESTE REGISTRO?")) {
-      try { await deleteDoc(doc(db, "historico_chamadas", idChamadaExistente)); resetar(); } catch (e) { console.error(e); }
-    }
   };
 
   const resetar = () => {
@@ -69,32 +79,57 @@ export default function Chamada() {
   const turmaAtiva = mostrarTabela ? turmas.find(t => t.id === idTurmaSelecionada) : null;
 
   return (
-    <div style={{ padding: '15px', maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box' }}>
+    <div style={{ padding: '10px', maxWidth: '1200px', margin: '0 auto' }}>
       <h2 style={{ textAlign: 'center', color: '#000', fontWeight: '900', textTransform: 'uppercase' }}>Diário de Classe</h2>
       
-      {/* SEÇÃO DE BUSCA RESPONSIVA */}
-      <div style={buscaContainer}>
-        <select value={idTurmaSelecionada} onChange={e => { setIdTurmaSelecionada(e.target.value); setMostrarTabela(false); }} style={inputStyle}>
+      {/* CONTAINER DE BUSCA RESPONSIVO */}
+      <div style={containerBuscaStyle}>
+        <select 
+          value={idTurmaSelecionada} 
+          onChange={e => { setIdTurmaSelecionada(e.target.value); setMostrarTabela(false); }} 
+          style={inputResponsivoStyle}
+        >
           <option value="">TURMA</option>
-          {turmas.map(t => <option key={t.id} value={t.id}>{t.nomeTurma}</option>)}
+          {turmas.map(t => (
+            <option key={t.id} value={t.id}>
+              {t.nomeTurma} - {t.materia} ({t.turno?.toUpperCase()})
+            </option>
+          ))}
         </select>
-        <input type="date" value={dataAula} onChange={e => { setDataAula(e.target.value); setMostrarTabela(false); }} style={inputStyle} />
-        <button onClick={buscarChamada} style={btnBlackStyle}>PESQUISAR</button>
+        
+        <input 
+          type="date" 
+          value={dataAula} 
+          onChange={e => { setDataAula(e.target.value); setMostrarTabela(false); }} 
+          style={inputResponsivoStyle} 
+        />
+        
+        <button onClick={buscarChamada} style={btnPesquisarStyle}>PESQUISAR</button>
       </div>
 
       {turmaAtiva && (
         <div style={{ border: '2px solid #000', padding: '15px', backgroundColor: '#fff' }}>
-          <label style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>CONTEÚDO DO DIA:</label>
+          <div style={{ marginBottom: '15px', borderBottom: '2px solid #f4f4f4', paddingBottom: '10px' }}>
+             <strong style={{ fontSize: '0.85rem', color: '#96190c', textTransform: 'uppercase' }}>
+                {turmaAtiva.nomeTurma} | {turmaAtiva.materia} | {turmaAtiva.turno}
+             </strong>
+          </div>
+
+          <label style={{ fontWeight: 'bold', fontSize: '0.75rem' }}>CONTEÚDO DA AULA:</label>
           <textarea 
             value={conteudo} 
             onChange={e => setConteudo(e.target.value)} 
+            placeholder="Resumo da aula..."
             style={{ width: '100%', height: '100px', marginTop: '10px', padding: '10px', border: '1px solid #000', fontWeight: 'bold', boxSizing: 'border-box' }} 
           />
           
           <div className="table-container" style={{ marginTop: '20px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ backgroundColor: '#000', color: '#fff' }}>
-                <tr><th style={thStyle}>ESTUDANTE</th><th style={{ ...thStyle, textAlign: 'center' }}>PRESENÇA</th></tr>
+                <tr>
+                  <th style={thStyle}>ESTUDANTE</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>PRESENÇA</th>
+                </tr>
               </thead>
               <tbody>
                 {turmaAtiva.alunos.map(n => (
@@ -105,7 +140,7 @@ export default function Chamada() {
                         type="checkbox" 
                         checked={!!presencas[n]} 
                         onChange={() => setPresencas(p => ({ ...p, [n]: !p[n] }))} 
-                        style={{ width: '25px', height: '25px', cursor: 'pointer', accentColor: '#96190c' }} 
+                        style={{ width: '25px', height: '25px', accentColor: '#96190c' }} 
                       />
                     </td>
                   </tr>
@@ -114,11 +149,9 @@ export default function Chamada() {
             </table>
           </div>
 
-          {/* BOTÕES DE AÇÃO RESPONSIVOS */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-            <button onClick={salvarChamada} style={{ ...btnRedStyle, flex: '2 1 200px' }}>SALVAR</button>
-            {idChamadaExistente && <button onClick={excluirChamada} style={{ ...btnBlackStyle, flex: '1 1 100px' }}>EXCLUIR</button>}
-            <button onClick={resetar} style={{ ...btnBlackStyle, backgroundColor: '#333', flex: '1 1 100px' }}>CANCELAR</button>
+            <button onClick={salvarChamada} style={btnRedStyle}>SALVAR DIÁRIO</button>
+            <button onClick={resetar} style={btnBlackStyle}>CANCELAR</button>
           </div>
         </div>
       )}
@@ -126,17 +159,37 @@ export default function Chamada() {
   );
 }
 
-// Estilos Auxiliares
-const buscaContainer = { 
-  display: 'flex', 
-  flexWrap: 'wrap', 
-  gap: '10px', 
-  marginBottom: '20px', 
-  padding: '15px', 
-  border: '2px solid #000', 
-  backgroundColor: '#fff' 
+// ESTILOS DE RESPONSIVIDADE (CSS-IN-JS)
+const containerBuscaStyle = {
+  display: 'flex',
+  flexWrap: 'wrap', // Permite quebrar linha no mobile
+  gap: '10px',
+  marginBottom: '20px',
+  padding: '15px',
+  border: '2px solid #000',
+  backgroundColor: '#fff'
 };
-const inputStyle = { padding: '12px', border: '1px solid #000', flex: '1 1 150px', fontWeight: 'bold', outline: 'none' };
-const btnBlackStyle = { padding: '12px', backgroundColor: '#000', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' };
-const btnRedStyle = { padding: '15px', backgroundColor: '#96190c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: '900', letterSpacing: '1px' };
-const thStyle = { padding: '15px', textAlign: 'left', fontSize: '0.7rem' };
+
+const inputResponsivoStyle = {
+  flex: '1 1 200px', // Cresce para ocupar espaço, mas quebra se tiver menos de 200px
+  padding: '12px',
+  border: '1px solid #000',
+  fontWeight: 'bold',
+  outline: 'none',
+  minWidth: '0' // Evita que o select estoure o container
+};
+
+const btnPesquisarStyle = {
+  flex: '1 1 100%', // No mobile tenta ocupar a linha toda
+  padding: '12px 25px',
+  backgroundColor: '#000',
+  color: '#fff',
+  border: 'none',
+  fontWeight: 'bold',
+  cursor: 'pointer'
+};
+
+// Outros estilos
+const btnBlackStyle = { padding: '15px', backgroundColor: '#333', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', flex: '1' };
+const btnRedStyle = { padding: '15px', backgroundColor: '#96190c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: '900', flex: '2' };
+const thStyle = { padding: '15px', textAlign: 'left', fontSize: '0.65rem' };

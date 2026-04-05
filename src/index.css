@@ -7,10 +7,9 @@
   font: 16px/145% var(--sans);
 }
 
-body { 
-  margin: 0; 
-  background-color: #f4f4f4; 
-}
+* { box-sizing: border-box; }
+
+body { margin: 0; background-color: #f4f4f4; width: 100%; overflow-x: hidden; }
 
 #root {
   width: 100%;
@@ -19,53 +18,57 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
   background-color: #fff;
-  border-inline: 1px solid #e5e4e7;
 }
 
-/* Ajuste para Tabelas no Mobile - REMOVIDO O ATRIBUTO OBSOLETO */
-.table-container {
+/* Container de Input + Botão (Resolve o campo esmagado) */
+.form-group-responsive {
+  display: flex;
+  gap: 10px;
   width: 100%;
-  overflow-x: auto; /* Isso já garante a rolagem no mobile */
-  border: 2px solid #000;
-  box-sizing: border-box;
+  align-items: center;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 700px; /* Garante que a tabela não "esmague" as colunas no celular */
+.input-flex {
+  flex: 1; /* Ocupa todo o espaço sobrando */
+  min-width: 0;
 }
 
-/* Container Flexível para as colunas de Cadastro */
+/* Grid de Colunas */
 .grid-layout {
   display: flex;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   gap: 20px;
   padding: 10px;
-  box-sizing: border-box;
 }
 
-.col-sidebar { 
-  flex: 1 1 350px; 
-  box-sizing: border-box;
-}
+.col-sidebar, .col-main { flex: 1 1 350px; min-width: 0; }
 
-.col-main { 
-  flex: 2 1 500px; 
-  box-sizing: border-box;
-}
+/* Tabela Responsiva (Vira lista no Mobile para o botão aparecer) */
+@media (max-width: 600px) {
+  .col-sidebar, .col-main { flex: 1 1 100%; }
 
-/* Breakpoint para Celulares */
-@media (max-width: 768px) {
-  h2 { font-size: 1.1rem !important; }
-  .col-sidebar, .col-main { 
-    flex: 1 1 100%; 
+  table, thead, tbody, th, td, tr { display: block; }
+  thead { display: none; } /* Esconde cabeçalho no mobile */
+
+  tr {
+    border: 2px solid #000;
+    margin-bottom: 10px;
+    padding: 10px;
   }
-  
-  /* Melhora o toque nos inputs no mobile */
-  input, select, button {
-    font-size: 16px !important; /* Evita zoom automático no iOS */
+
+  td {
+    border: none;
+    padding: 5px 0;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .btn-acao-mobile {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px !important;
   }
 }

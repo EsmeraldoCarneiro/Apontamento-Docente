@@ -32,27 +32,29 @@ function App() {
     <Router>
       <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
         {usuario && (
-          <nav style={{ 
-            padding: '0 2rem', backgroundColor: '#000000', color: 'white',
+          <nav className="nav-container" style={{
+            padding: '10px 1rem', backgroundColor: '#000000', color: 'white',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            height: '70px', borderBottom: '4px solid #96190c', boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+            flexWrap: 'wrap', gap: '10px', borderBottom: '4px solid #96190c'
           }}>
-            <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-              <div style={{ fontWeight: '900', fontSize: '1.2rem', letterSpacing: '1px', borderRight: '1px solid #333', paddingRight: '20px' }}>
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ fontWeight: '900', fontSize: '1.1rem', letterSpacing: '1px' }}>
                 DOCENTE <span style={{ color: '#96190c' }}>PRO</span>
               </div>
-              <Link to="/" style={navLinkStyle}>TURMAS</Link>
-              <Link to="/chamada" style={navLinkStyle}>CHAMADA</Link>
-              <Link to="/notas" style={navLinkStyle}>NOTAS</Link>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <Link to="/" style={navLinkStyle}>TURMAS</Link>
+                <Link to="/chamada" style={navLinkStyle}>CHAMADA</Link>
+                <Link to="/notas" style={navLinkStyle}>NOTAS</Link>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <small style={{ color: '#fff', textTransform: 'lowercase', fontWeight: 'bold' }}>{usuario.email}</small>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <small style={{ color: '#fff', fontSize: '0.7rem' }}>{usuario.email}</small>
               <button onClick={handleLogout} style={btnLogoutStyle}>SAIR</button>
             </div>
           </nav>
         )}
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '10px', boxSizing: 'border-box' }}>
           <Routes>
             <Route path="/login" element={!usuario ? <Login /> : <Navigate to="/" />} />
             <Route path="/" element={usuario ? <CadastroAlunos /> : <Navigate to="/login" />} />
