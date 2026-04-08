@@ -32,11 +32,13 @@ export default function GestaoNotas() {
         const turmaRef = turmas.find(t => t.id === idTurmaSelecionada);
         if (!turmaRef) return;
 
+        // Pega o total de dias letivos cadastrados na turma (ex: 200)
+        const totalDiasTurma = Number(turmaRef.diasLetivos) || 1;
+
         const qChamadas = query(collection(db, "historico_chamadas"), where("idTurma", "==", idTurmaSelecionada));
         const snapChamadas = await getDocs(qChamadas);
         
         let faltasContagem = {};
-        let totalAulasDadas = 0;
         const listaAlunos = turmaRef.alunos || [];
         listaAlunos.forEach(a => faltasContagem[a] = 0);
         
@@ -44,30 +46,28 @@ export default function GestaoNotas() {
           const dadosChamada = d.data();
           const lp = dadosChamada.listaPresenca || {};
           const qtdAulasNoDia = Number(dadosChamada.qtdAulasDoDia) || 1;
-          totalAulasDadas += qtdAulasNoDia;
 
           listaAlunos.forEach(a => {
             const registro = lp[a];
             if (Array.isArray(registro)) {
-              // Se for o novo formato Multi-Aula (Array)
               registro.forEach(presenca => { if (presenca !== true) faltasContagem[a]++; });
             } else {
-              // Se for o formato antigo (Boolean)
               if (registro !== true) faltasContagem[a] += qtdAulasNoDia;
             }
           });
         });
 
-        // Cálculo da Frequência baseado no Total de Aulas do Semestre
         let cFreq = {};
         listaAlunos.forEach(a => {
-          const divisor = totalAulasDadas || 1;
+          // O divisor agora é o total de dias cadastrados, não apenas as chamadas feitas
+          const divisor = totalDiasTurma;
           const perc = Math.round(((divisor - faltasContagem[a]) / divisor) * 100);
           const maxFaltasPermitidas = Math.floor(divisor * 0.25);
+          
           cFreq[a] = { 
             percentual: Math.max(0, perc), 
             faltasAtuais: faltasContagem[a],
-            maxFaltasPermitidas
+            maxFaltasPermitidas: maxFaltasPermitidas
           };
         });
         setFrequencias(cFreq);
@@ -90,8 +90,7 @@ export default function GestaoNotas() {
 
   const obterResultadoCompleto = (nome, alunoData) => {
     const freqData = frequencias[nome] || { percentual: 100, faltasAtuais: 0, maxFaltasPermitidas: 0 };
-    const faltasRestantes = Math.max(0, freqData.maxFaltasPermitidas - freqData.faltasAtuais);
-
+    
     const notasRaw = alunoData.notas || [];
     const pesosRaw = configProvas || [];
     const rec = Number(alunoData.recuperacao) || 0;
@@ -100,7 +99,6 @@ export default function GestaoNotas() {
     const notas = Array.from({ length: nProvas }, (_, i) => Number(notasRaw[i]) || 0);
     const pesos = Array.from({ length: nProvas }, (_, i) => Number(pesosRaw[i]?.peso) || 0);
 
-    // Condição de preenchimento total solicitado
     const todasNotasPreenchidas = notasRaw.length === nProvas && notasRaw.every(n => n !== "" && n !== null);
 
     let indexMenor = 0;
@@ -136,7 +134,17 @@ export default function GestaoNotas() {
     else if (emRecuperacao && rec === 0) { status = "REC. OBRIGATÓRIA"; cor = "#f39c12"; }
     else { status = "REPROVADO"; cor = "#96190c"; }
 
-    return { mediaFinal, precisa, status, freq: freqData.percentual, cor, emRecuperacao, todasNotasPreenchidas, faltasRestantes };
+    return { 
+      mediaFinal, 
+      precisa, 
+      status, 
+      freq: freqData.percentual, 
+      cor, 
+      emRecuperacao, 
+      todasNotasPreenchidas,
+      faltasAtuais: freqData.faltasAtuais,
+      maxFaltasPermitidas: freqData.maxFaltasPermitidas 
+    };
   };
 
   const salvar = async () => {
@@ -213,7 +221,7 @@ export default function GestaoNotas() {
               <tr>
                 <th style={{ ...thStyle, textAlign: 'left', paddingLeft: '20px' }}>ALUNO</th>
                 <th style={thStyle}>FREQ %</th>
-                <th style={{ ...thStyle, backgroundColor: '#333' }}>FALTAS</th>
+                <th style={{ ...thStyle, backgroundColor: '#333' }}>FALTAS (MÁX)</th>
                 {configProvas.map((_, i) => <th key={i} style={{ ...thStyle, backgroundColor: '#222' }}>AV{i+1}</th>)}
                 <th style={{ ...thStyle, backgroundColor: '#96190c' }}>REC</th>
                 <th style={{ ...thStyle, backgroundColor: '#222' }}>PRECISA</th>
@@ -229,7 +237,17 @@ export default function GestaoNotas() {
                   <tr key={nome}>
                     <td style={{ ...tdStyle, fontWeight: '800', paddingLeft: '20px' }}>{nome}</td>
                     <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold' }}>{res.freq}%</td>
-                    <td style={{ ...tdStyle, textAlign: 'center' }}>{res.faltasRestantes}</td>
+                    
+                    {/* COLUNA DE FALTAS CORRIGIDA: MOSTRA FALTAS REAIS / LIMITE DOS 200 DIAS */}
+                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold' }}>
+                      <span style={{ color: res.faltasAtuais > res.maxFaltasPermitidas ? '#96190c' : '#333' }}>
+                        {res.faltasAtuais}
+                      </span>
+                      <span style={{ color: '#999', fontSize: '0.75rem', fontWeight: 'normal' }}>
+                        {" "}({res.maxFaltasPermitidas})
+                      </span>
+                    </td>
+
                     {configProvas.map((_, i) => (
                       <td key={i} style={{ ...tdStyle, textAlign: 'center' }}>
                         <input type="number" value={d.notas[i] || ''} onChange={e => {
